@@ -7,43 +7,52 @@ applyTo: "src/backend/**/*.cs"
 
 ## Architecture
 
-The backend follows a **Controller → Service → Model** layered architecture with constructor-based dependency injection.
+The backend follows a **Minimal API Endpoint → Service → Model** layered architecture with dependency injection via handler parameters.
 
 ```
-Controllers/    API endpoints — thin, delegate to services
+Endpoints/      API route mappings — thin static classes, delegate to services
 Services/       Business logic — interface + implementation pairs
 Models/         Data shapes — plain C# classes
 ```
 
-## Controller Pattern
+## Endpoint Pattern
 
-Every controller must:
-- Inherit `ControllerBase`
-- Be decorated with `[ApiController]` and `[Route("api/[controller]")]`
-- Use **primary constructor** injection for dependencies
-- Return `ActionResult<T>` for typed responses or `IActionResult` for status-only responses
-- Validate inputs and return appropriate HTTP status codes (`Ok`, `NotFound`, `BadRequest`, `CreatedAtAction`, `NoContent`)
+Endpoints are organized as static classes in the `Endpoints/` folder. Each class:
+- Contains a `Map*Endpoints(this WebApplication app)` extension method
+- Groups related routes using `MapGroup()`
+- Uses `TypedResults` for strongly-typed responses
+- Uses `Results<T1, T2>` union types when multiple response types are possible
+- Receives services via handler parameter injection
+- Includes `WithName()` for operationIds and `WithSummary()` for OpenAPI docs
 
-Reference: `src/backend/MockEcommerce.Api/Controllers/ProductsController.cs`
+Reference: `src/backend/MockEcommerce.Api/Endpoints/ProductEndpoints.cs`
 
 ```csharp
-[ApiController]
-[Route("api/[controller]")]
-public class ProductsController(IProductService productService) : ControllerBase
+public static class ProductEndpoints
 {
-    [HttpGet]
-    public ActionResult<IEnumerable<Product>> GetAll()
+    public static void MapProductEndpoints(this WebApplication app)
     {
-        return Ok(productService.GetAll());
+        var group = app.MapGroup("api/products")
+            .WithTags("Products");
+
+        group.MapGet("/", GetAll)
+            .WithName("GetAllProducts");
+
+        group.MapGet("/{id:int}", GetById)
+            .WithName("GetProductById");
     }
 
-    [HttpGet("{id:int}")]
-    public ActionResult<Product> GetById(int id)
+    internal static Ok<IEnumerable<Product>> GetAll(IProductService productService)
+    {
+        return TypedResults.Ok(productService.GetAll());
+    }
+
+    internal static Results<Ok<Product>, NotFound> GetById(int id, IProductService productService)
     {
         var product = productService.GetById(id);
         if (product is null)
-            return NotFound();
-        return Ok(product);
+            return TypedResults.NotFound();
+        return TypedResults.Ok(product);
     }
 }
 ```
@@ -84,8 +93,8 @@ Reference: `src/backend/MockEcommerce.Api/Models/Product.cs`, `CartItem.cs`
 
 The minimal hosting pipeline in order:
 1. `app.UseCors()` — CORS middleware (origin: `http://localhost:5173`)
-2. `app.UseAuthorization()` — authorization middleware
-3. `app.MapControllers()` — endpoint routing
+2. `app.MapOpenApi()` — OpenAPI document endpoint
+3. `app.Map*Endpoints()` — minimal API endpoint mappings
 
 When adding middleware, maintain this order and add new middleware at the appropriate point.
 

@@ -1,9 +1,11 @@
+using MockEcommerce.Api.Endpoints;
+using MockEcommerce.Api.Services;
+
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Services.AddControllers();
 builder.Services.AddOpenApi();
-builder.Services.AddSingleton<MockEcommerce.Api.Services.IProductService, MockEcommerce.Api.Services.MockProductService>();
-builder.Services.AddSingleton<MockEcommerce.Api.Services.ICartService, MockEcommerce.Api.Services.InMemoryCartService>();
+builder.Services.AddSingleton<IProductService, MockProductService>();
+builder.Services.AddSingleton<ICartService, InMemoryCartService>();
 
 builder.Services.AddCors(options =>
 {
@@ -18,9 +20,9 @@ builder.Services.AddCors(options =>
 var app = builder.Build();
 
 app.UseCors();
-app.UseAuthorization();
 app.MapOpenApi();
-app.MapControllers();
+app.MapProductEndpoints();
+app.MapCartEndpoints();
 
 app.Run();
 

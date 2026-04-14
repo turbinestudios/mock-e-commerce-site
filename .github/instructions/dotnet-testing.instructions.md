@@ -17,8 +17,8 @@ Test folder structure mirrors the source project:
 
 ```
 test/backend/MockEcommerce.Api.Tests/
-├── Controllers/          mirrors src/backend/.../Controllers/
-│   └── ProductsControllerTests.cs
+├── Endpoints/            mirrors src/backend/.../Endpoints/
+│   └── ProductEndpointTests.cs
 ├── Services/             mirrors src/backend/.../Services/
 │   └── MockProductServiceTests.cs
 ```
@@ -70,62 +70,77 @@ public void GetById_WithValidId_ReturnsOkWithProduct()
 Unit tests use **direct instantiation** with real or simple dependencies:
 
 ```csharp
-public class ProductsControllerTests
+public class MockProductServiceTests
 {
-    private readonly ProductsController _controller;
+    private readonly MockProductService _service = new();
 
-    public ProductsControllerTests()
+    [Fact]
+    public void GetAll_ReturnsAllProducts()
     {
-        var service = new MockProductService();
-        _controller = new ProductsController(service);
+        var products = _service.GetAll().ToList();
+        Assert.NotEmpty(products);
     }
 }
 ```
 
-- Instantiate the system under test in the constructor
+- Instantiate the system under test in the constructor or as a field initializer
 - Use the existing mock service implementations when available
 - For isolating dependencies, create simple test doubles or use a mocking library
 
-## Integration Tests
+## Integration Tests (Endpoint Tests)
 
-Use `WebApplicationFactory<Program>` for HTTP-level integration tests:
+Endpoint tests use `WebApplicationFactory<Program>` for HTTP-level integration testing:
 
 ```csharp
-public class ProductsApiTests : IClassFixture<WebApplicationFactory<Program>>
+public class ProductEndpointTests : IClassFixture<WebApplicationFactory<Program>>
 {
     private readonly HttpClient _client;
 
-    public ProductsApiTests(WebApplicationFactory<Program> factory)
+    public ProductEndpointTests(WebApplicationFactory<Program> factory)
     {
         _client = factory.CreateClient();
     }
 
     [Fact]
-    public async Task GetProducts_ReturnsSuccessStatusCode()
+    public async Task GetAll_ReturnsOkWithProducts()
     {
         var response = await _client.GetAsync("/api/products");
         response.EnsureSuccessStatusCode();
+        var products = await response.Content.ReadFromJsonAsync<List<Product>>();
+        Assert.NotNull(products);
+        Assert.NotEmpty(products);
+    }
+
+    [Fact]
+    public async Task GetById_WithInvalidId_ReturnsNotFound()
+    {
+        var response = await _client.GetAsync("/api/products/9999");
+        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
     }
 }
 ```
 
-## Controller Test Assertions
+## Endpoint Test Assertions
 
-When testing controllers, assert on both the `ActionResult` wrapper and the inner value:
+When testing minimal API endpoints via HTTP, assert on status codes and deserialized response bodies:
 
 ```csharp
 // Success with typed value
-var ok = Assert.IsType<OkObjectResult>(result.Result);
-var product = Assert.IsType<Product>(ok.Value);
+response.EnsureSuccessStatusCode();
+var product = await response.Content.ReadFromJsonAsync<Product>();
+Assert.NotNull(product);
 
 // Not found
-Assert.IsType<NotFoundResult>(result.Result);
+Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
 
 // Created
-Assert.IsType<CreatedAtActionResult>(result.Result);
+Assert.Equal(HttpStatusCode.Created, response.StatusCode);
 
 // No content
-Assert.IsType<NoContentResult>(result);
+Assert.Equal(HttpStatusCode.NoContent, response.StatusCode);
+
+// Bad request
+Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
 ```
 
 ## Data-Driven Tests
