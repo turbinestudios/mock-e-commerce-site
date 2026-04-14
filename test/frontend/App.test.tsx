@@ -34,7 +34,23 @@ describe('App', () => {
 
     render(<App />);
 
-    expect(screen.getByRole('heading', { name: /mock shop/i })).toBeInTheDocument();
+    expect(screen.getByText('Mock Shop')).toBeInTheDocument();
+  });
+
+  it('renders the hero banner', () => {
+    mockedUseProducts.mockReturnValue({ products: [], loading: false, error: null });
+
+    render(<App />);
+
+    expect(screen.getByText(/discover quality products/i)).toBeInTheDocument();
+  });
+
+  it('renders the products section heading', () => {
+    mockedUseProducts.mockReturnValue({ products: [], loading: false, error: null });
+
+    render(<App />);
+
+    expect(screen.getByRole('heading', { name: /our products/i })).toBeInTheDocument();
   });
 
   it('shows loading state', () => {
@@ -72,7 +88,7 @@ describe('App', () => {
     });
 
     render(<App />);
-    await userEvent.click(screen.getByRole('button', { name: /add to cart/i }));
+    await userEvent.click(screen.getByRole('button', { name: /add test headphones to cart/i }));
 
     expect(await screen.findByRole('status')).toHaveTextContent('"Test Headphones" added to cart!');
   });
@@ -82,7 +98,7 @@ describe('App', () => {
     mockedAddToCart.mockRejectedValue(new Error('Server error'));
 
     render(<App />);
-    await userEvent.click(screen.getByRole('button', { name: /add to cart/i }));
+    await userEvent.click(screen.getByRole('button', { name: /add test headphones to cart/i }));
 
     expect(await screen.findByRole('status')).toHaveTextContent('Failed to add item to cart.');
   });
