@@ -1,0 +1,22 @@
+export interface Product {
+  id: number;
+  name: string;
+  description: string;
+  price: number;
+  category: string;
+  stock: number;
+  imageUrl: string;
+}
+
+export interface CartItem {
+  productId: number;
+  productName: string;
+  unitPrice: number;
+  quantity: number;
+  totalPrice: number;
+}
+
+export interface AddToCartRequest {
+  productId: number;
+  quantity: number;
+}
