@@ -1,19 +1,27 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import type { Product } from './types';
 import { ProductList } from './components/ProductList';
 import { useProducts } from './hooks/useProducts';
 import { addToCart } from './api';
 import './App.css';
 
-function App() {
+export function App() {
   const { products, loading, error } = useProducts();
   const [cartMessage, setCartMessage] = useState<string | null>(null);
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (timerRef.current) clearTimeout(timerRef.current);
+    };
+  }, []);
 
   async function handleAddToCart(product: Product) {
     try {
       await addToCart({ productId: product.id, quantity: 1 });
       setCartMessage(`"${product.name}" added to cart!`);
-      setTimeout(() => setCartMessage(null), 3000);
+      if (timerRef.current) clearTimeout(timerRef.current);
+      timerRef.current = setTimeout(() => setCartMessage(null), 3000);
     } catch {
       setCartMessage('Failed to add item to cart.');
     }
@@ -41,5 +49,3 @@ function App() {
     </div>
   );
 }
-
-export default App;

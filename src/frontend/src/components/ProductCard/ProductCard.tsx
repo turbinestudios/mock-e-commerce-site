@@ -8,7 +8,14 @@ interface ProductCardProps {
 export function ProductCard({ product, onAddToCart }: ProductCardProps) {
   return (
     <article className="product-card">
-      <img src={product.imageUrl} alt={product.name} className="product-card__image" />
+      <img
+        src={product.imageUrl}
+        alt={product.name}
+        className="product-card__image"
+        width={300}
+        height={300}
+        loading="lazy"
+      />
       <div className="product-card__body">
         <span className="product-card__category">{product.category}</span>
         <h2 className="product-card__name">{product.name}</h2>
