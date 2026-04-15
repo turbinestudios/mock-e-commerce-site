@@ -35,7 +35,7 @@ public static class CartEndpoints
     /// <summary>Returns all items currently in the cart.</summary>
     internal static Ok<IEnumerable<CartItem>> GetCart(ICartService cartService)
     {
-        return TypedResults.Ok(cartService.GetAll());
+        throw new NotImplementedException();
     }
 
     /// <summary>Adds a product to the cart or increments quantity if already present.</summary>
@@ -44,58 +44,19 @@ public static class CartEndpoints
         IProductService productService,
         ICartService cartService)
     {
-        var product = productService.GetById(request.ProductId);
-        if (product is null)
-            return TypedResults.NotFound($"Product {request.ProductId} not found.");
-
-        if (request.Quantity <= 0)
-        {
-            return TypedResults.ValidationProblem(
-                new Dictionary<string, string[]>
-                {
-                    ["Quantity"] = ["Quantity must be greater than zero."]
-                });
-        }
-
-        var existing = cartService.GetByProductId(request.ProductId);
-        if (existing is not null)
-        {
-            var updated = cartService.Add(new CartItem
-            {
-                ProductId = product.Id,
-                ProductName = product.Name,
-                UnitPrice = product.Price,
-                Quantity = request.Quantity
-            });
-            return TypedResults.Ok(updated);
-        }
-
-        var item = new CartItem
-        {
-            ProductId = product.Id,
-            ProductName = product.Name,
-            UnitPrice = product.Price,
-            Quantity = request.Quantity
-        };
-
-        cartService.Add(item);
-        return TypedResults.Created($"/api/cart", item);
+        throw new NotImplementedException();
     }
 
     /// <summary>Removes a single product from the cart by its product ID.</summary>
     internal static Results<NoContent, NotFound> RemoveFromCart(int productId, ICartService cartService)
     {
-        if (!cartService.Remove(productId))
-            return TypedResults.NotFound();
-
-        return TypedResults.NoContent();
+        throw new NotImplementedException();
     }
 
     /// <summary>Removes all items from the cart.</summary>
     internal static NoContent ClearCart(ICartService cartService)
     {
-        cartService.Clear();
-        return TypedResults.NoContent();
+        throw new NotImplementedException();
     }
 }
 

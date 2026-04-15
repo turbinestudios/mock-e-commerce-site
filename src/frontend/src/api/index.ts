@@ -1,4 +1,12 @@
-import type { Product, CartItem, AddToCartRequest } from '../types';
+import type { Product, AddToCartRequest } from '../types';
+
+interface CartItem {
+  productId: number;
+  productName: string;
+  unitPrice: number;
+  quantity: number;
+  totalPrice: number;
+}
 
 const BASE_URL = '/api';
 
@@ -14,12 +22,6 @@ export async function fetchProductById(id: number): Promise<Product> {
   return response.json();
 }
 
-export async function fetchCart(): Promise<CartItem[]> {
-  const response = await fetch(`${BASE_URL}/cart`);
-  if (!response.ok) throw new Error('Failed to fetch cart');
-  return response.json();
-}
-
 export async function addToCart(request: AddToCartRequest): Promise<CartItem> {
   const response = await fetch(`${BASE_URL}/cart`, {
     method: 'POST',
@@ -30,12 +32,3 @@ export async function addToCart(request: AddToCartRequest): Promise<CartItem> {
   return response.json();
 }
 
-export async function removeFromCart(productId: number): Promise<void> {
-  const response = await fetch(`${BASE_URL}/cart/${productId}`, { method: 'DELETE' });
-  if (!response.ok) throw new Error('Failed to remove item from cart');
-}
-
-export async function clearCart(): Promise<void> {
-  const response = await fetch(`${BASE_URL}/cart`, { method: 'DELETE' });
-  if (!response.ok) throw new Error('Failed to clear cart');
-}
